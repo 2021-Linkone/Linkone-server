@@ -25,73 +25,84 @@ class Syllabus:
 
     def act(self,url,value):
         self.driver.get(url)
+
+        #履修期
         term = self.driver.find_element_by_id("selTacTrmCd")
         select = Select(term)
         select.select_by_value("02")
 
+        #学部
         department = self.driver.find_element_by_id("selLsnMngPostCd")
         select = Select(department)
         select.select_by_value(value)
 
-        day = self.driver.find_element_by_id("selTmtxCd")
-        select = Select(day)
-        select.select_by_value("A1")
+        for i in range(1,7):
+            #曜時
+            day = self.driver.find_element_by_id("selTmtxCd")
+            select = Select(day)
+            select.select_by_value(f'A{i}')
 
-        self.driver.find_element_by_xpath('//*[@id="contents"]/div[2]/input[1]').click()
 
-        page_source = self.driver.page_source
-        soup = BeautifulSoup(page_source, 'html.parser')
+            self.driver.find_element_by_xpath('//*[@id="contents"]/div[2]/input[1]').click()
 
-        class_lists = soup.find_all("tr")[1:]
-        max_num = len(class_lists)
+            page_source = self.driver.page_source
+            soup = BeautifulSoup(page_source, 'html.parser')
 
-        print('春学期：月曜1限スターーート！')
+            class_lists = soup.find_all("tr")[1:]
+            max_num = len(class_lists)
 
-        classinfo = {}
+            print(f'春学期：月曜{i}限スターーート！')
 
-        self.driver.find_element_by_name
-        for num in range(2,max_num+1):
-            sleep(1)
-            self.driver.find_element_by_xpath(f'//*[@id="contents"]/div[1]/div[2]/table/tbody/tr[{num}]/td[1]/input[1]').click()
+            classinfo = {}
 
-            classcode = self.driver.find_element_by_name('lblLsnCd').get_attribute("value")
-            administrativedepartment = self.driver.find_element_by_name('lblAc119ScrDispNm').get_attribute("value")
-            coursenumber = self.driver.find_element_by_name('lblRepSbjKnjNm').get_attribute("value")
-            instructor = self.driver.find_element_by_name('lstChagTch_st[0].lblTchName').get_attribute("value")
-            dayandperiod = self.driver.find_element_by_name('lstSlbtchinftJ002List_st[0].lblTmtxCd').get_attribute("value")
-            grading = self.driver.find_element_by_xpath('//*[@id="contents"]/div[1]/table[6]/tbody')
+            self.driver.find_element_by_name
+            for num in range(2,max_num+1):
+                sleep(1)
+                self.driver.find_element_by_xpath(f'//*[@id="contents"]/div[1]/div[2]/table/tbody/tr[{num}]/td[1]/input[1]').click()
 
-            classinfo.setdefault(classcode, { 
-                '管理部署': administrativedepartment,
-                '科目': coursenumber,
-                '担当教授': instructor,
-                '曜時': dayandperiod,
-                '成績評価': grading.text,
-            })
-            # json = {
-            # classcode : {
-            # '管理部署': administrativedepartment,
-            # '科目': coursenumber,
-            # '担当教授': instructor,
-            # '曜時': dayandperiod,
-            # '成績評価': grading.text,
-            # }
-            # }
-        
+                classcode = self.driver.find_element_by_name('lblLsnCd').get_attribute("value")
+                administrativedepartment = self.driver.find_element_by_name('lblAc119ScrDispNm').get_attribute("value")
+                coursenumber = self.driver.find_element_by_name('lblRepSbjKnjNm').get_attribute("value")
+                instructor = self.driver.find_element_by_name('lstChagTch_st[0].lblTchName').get_attribute("value")
+                dayandperiod = self.driver.find_element_by_name('lstSlbtchinftJ002List_st[0].lblTmtxCd').get_attribute("value")
+                grading = self.driver.find_element_by_xpath('//*[@id="contents"]/div[1]/table[6]/tbody')
+
+                classinfo.setdefault(classcode, { 
+                    '管理部署': administrativedepartment,
+                    '科目': coursenumber,
+                    '担当教授': instructor,
+                    '曜時': dayandperiod,
+                    '成績評価': grading.text,
+                })
+                # json = {
+                # classcode : {
+                # '管理部署': administrativedepartment,
+                # '科目': coursenumber,
+                # '担当教授': instructor,
+                # '曜時': dayandperiod,
+                # '成績評価': grading.text,
+                # }
+                # }
             
-            print(f'jsonファイル{num-1}番目 : {classinfo}')
+                
+                print(f'jsonファイル{num-1}番目 : {classinfo}')
 
+                
+                sleep(1)
+                self.driver.find_element_by_tag_name('body').click()
+                self.driver.find_element_by_tag_name('body').send_keys(Keys.PAGE_DOWN)  
+                sleep(1)
+
+                self.driver.find_element_by_xpath('//*[@id="contents"]/div[2]/input').click()
+
+
+            text = json.dumps(classinfo, sort_keys=True, ensure_ascii=False, indent=2)
+            with open(f'Monday{i}.json', "wb") as f:
+                f.write(text.encode("utf-8"))
             
-            sleep(1)
-            self.driver.find_element_by_tag_name('body').click()
-            self.driver.find_element_by_tag_name('body').send_keys(Keys.PAGE_DOWN)  
-            sleep(1)
-
+            #戻るボタンクリック
             self.driver.find_element_by_xpath('//*[@id="contents"]/div[2]/input').click()
 
-        text = json.dumps(classinfo, sort_keys=True, ensure_ascii=False, indent=2)
-        with open("Monday1.json", "wb") as f:
-            f.write(text.encode("utf-8"))
 
         # 処理が終わったらwindowを閉じる
         self.driver.close()
