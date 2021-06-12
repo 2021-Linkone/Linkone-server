@@ -22,7 +22,6 @@ class Syllabus:
         self.options.add_argument('--window-size=1920,1080')
         #mac環境用
         self.driver = webdriver.Chrome(chrome_options=self.options)
-        searchingADJa = {}
 
     def act(self,url,value):
         self.driver.get(url)
@@ -40,11 +39,18 @@ class Syllabus:
 
         self.driver.find_element_by_xpath('//*[@id="contents"]/div[2]/input[1]').click()
 
+        page_source = self.driver.page_source
+        soup = BeautifulSoup(page_source, 'html.parser')
+
+        class_lists = soup.find_all("tr")[1:]
+        max_num = len(class_lists)
+
         print('春学期：月曜1限スターーート！')
 
         classinfo = {}
 
-        for num in range(2,8):
+        self.driver.find_element_by_name
+        for num in range(2,max_num+1):
             sleep(1)
             self.driver.find_element_by_xpath(f'//*[@id="contents"]/div[1]/div[2]/table/tbody/tr[{num}]/td[1]/input[1]').click()
 
