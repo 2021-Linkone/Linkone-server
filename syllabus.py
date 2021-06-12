@@ -18,7 +18,7 @@ class Syllabus:
     def __init__(self):
         self.options = Options()
         #ブラウザ立ち上げは処理が重たくなるので本番環境ではheadlessモードを採用
-        self.options.add_argument('--headless')
+        # self.options.add_argument('--headless')
         self.options.add_argument('--window-size=1920,1080')
         #mac環境用
         self.driver = webdriver.Chrome(chrome_options=self.options)
@@ -36,12 +36,32 @@ class Syllabus:
         select = Select(department)
         select.select_by_value(value)
 
-        for i in range(1,7):
+        #selector格納変数
+        day_num = ["A","B","C","D","E","F","G"]
+        week_num = ["Mon","Tue","Wed","Thur","Fri"]
+        count = 0
+        for i in range(11,40):
+            print(f'スターーーーと{i}番目')
+            
+
+            #6,7限スキップ処理
+            if i % 6 == 0:
+                count += 1
+                i %= 6 
+                i += 1
+                print(f'{day_num[count]}{i}')
+            elif i % 6 == 5:
+                count += 1
+                i %= 6
+                i -= 4
+            elif i >= 6:
+                i %= 6 
+                i += 1
+                
             #曜時
             day = self.driver.find_element_by_id("selTmtxCd")
             select = Select(day)
-            select.select_by_value(f'A{i}')
-
+            select.select_by_value(f'{day_num[count]}{i}')
 
             self.driver.find_element_by_xpath('//*[@id="contents"]/div[2]/input[1]').click()
 
@@ -51,7 +71,7 @@ class Syllabus:
             class_lists = soup.find_all("tr")[1:]
             max_num = len(class_lists)
 
-            print(f'春学期：月曜{i}限スターーート！')
+            print(f'春学期：{week_num[count]}{i}限スターーート！')
 
             classinfo = {}
 
@@ -65,14 +85,12 @@ class Syllabus:
                 coursenumber = self.driver.find_element_by_name('lblRepSbjKnjNm').get_attribute("value")
                 instructor = self.driver.find_element_by_name('lstChagTch_st[0].lblTchName').get_attribute("value")
                 dayandperiod = self.driver.find_element_by_name('lstSlbtchinftJ002List_st[0].lblTmtxCd').get_attribute("value")
-                grading = self.driver.find_element_by_xpath('//*[@id="contents"]/div[1]/table[6]/tbody')
 
                 classinfo.setdefault(classcode, { 
                     '管理部署': administrativedepartment,
                     '科目': coursenumber,
                     '担当教授': instructor,
                     '曜時': dayandperiod,
-                    '成績評価': grading.text,
                 })
                 # json = {
                 # classcode : {
@@ -97,7 +115,7 @@ class Syllabus:
 
 
             text = json.dumps(classinfo, sort_keys=True, ensure_ascii=False, indent=2)
-            with open(f'Monday{i}.json', "wb") as f:
+            with open(f'{week_num[count]}{i}.json', "wb") as f:
                 f.write(text.encode("utf-8"))
             
             #戻るボタンクリック
@@ -105,8 +123,8 @@ class Syllabus:
 
 
         # 処理が終わったらwindowを閉じる
-        self.driver.close()
-        self.driver.quit()
+        # self.driver.close()
+        # self.driver.quit()
 
         # return json
     # def open_url(self, url):
